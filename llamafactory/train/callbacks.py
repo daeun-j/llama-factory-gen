@@ -73,7 +73,7 @@ def fix_valuehead_checkpoint(
     if safe_serialization:
         path_to_checkpoint = os.path.join(output_dir, SAFE_WEIGHTS_NAME)
         with safe_open(path_to_checkpoint, framework="pt", device="cpu") as f:
-            state_dict: dict[str, torch.Tensor] = {key: f.get_tensor(key).clone() for key in f.keys()}
+            state_dict: dict[str, torch.Tensor] = {key: f.get_tensor(key) for key in f.keys()}
     else:
         path_to_checkpoint = os.path.join(output_dir, WEIGHTS_NAME)
         state_dict: dict[str, torch.Tensor] = torch.load(path_to_checkpoint, map_location="cpu", weights_only=True)
@@ -286,6 +286,17 @@ class LogCallback(TrainerCallback):
             percentage=round(self.cur_steps / self.max_steps * 100, 2) if self.max_steps != 0 else 100,
             elapsed_time=self.elapsed_time,
             remaining_time=self.remaining_time,
+            optim_name=getattr(args, "optim_name", "u"), 
+            losses=getattr(args, "losses", "u"), 
+            categories=getattr(args, "categories", "u"), 
+            subcategories=getattr(args, "subcategories", "u"), 
+            hessian=getattr(args, "hessian", "u"), 
+            rho_eff=getattr(args, "rho_eff", "u"), 
+            # epss=getattr(args, "epss", "unknown"), 
+            # priors=getattr(args, "priors", "unknown"), 
+            num_tokens=getattr(args, "num_tokens", "u"), 
+            ths=getattr(args, "ths", "u"), 
+            kl=getattr(args, "kl", "u"), 
         )
         if state.num_input_tokens_seen:
             logs["throughput"] = round(state.num_input_tokens_seen / (time.time() - self.start_time), 2)
