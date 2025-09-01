@@ -35,6 +35,35 @@ if TYPE_CHECKING:
 logger = logging.get_logger(__name__)
 
 
+KEY2ID = {
+    "describe": 0,
+    "provide": 1,
+    "generate": 2,
+    "create": 3,
+    "write": 4,
+    "name": 5,
+    "rewrite": 6,
+    "other": 7,
+    "explain": 8,
+    "find": 9,
+    "identify": 10,
+    "classify": 11,
+    "construct": 12,
+    "suggest": 13,
+    "edit": 14,
+    "calculate": 15,
+    "make": 16,
+    "summarize": 17,
+    "convert": 18,
+    "design": 19,
+    "give": 20,
+}
+
+KEY2SUBID = {
+    "center": 0,
+    "edge": 1,
+}
+
 @dataclass
 class DatasetConverter:
     dataset_attr: "DatasetAttr"
@@ -118,6 +147,16 @@ class AlpacaDatasetConverter(DatasetConverter):
             response = [{"role": Role.ASSISTANT.value, "content": example[self.dataset_attr.response]}]
         else:  # unsupervised
             response = []
+        # after (권장)
+        subcat = example.get("subcategory", None)
+        subcat_id = KEY2SUBID.get(subcat, -1) if subcat is not None else -1
+
+        cat = example.get("category", None)
+        cat_id = KEY2ID.get(cat, -1) if cat is not None else -1
+
+        diff = example.get("difficulty_score", None)
+        diff = diff if diff is not None else -1
+        # cat_id = KEY2ID.get(cat, -1) if cat is not None else -1
 
         output = {
             "_prompt": prompt,
@@ -127,6 +166,9 @@ class AlpacaDatasetConverter(DatasetConverter):
             "_images": self._find_medias(example[self.dataset_attr.images]) if self.dataset_attr.images else None,
             "_videos": self._find_medias(example[self.dataset_attr.videos]) if self.dataset_attr.videos else None,
             "_audios": self._find_medias(example[self.dataset_attr.audios]) if self.dataset_attr.audios else None,
+            "_category": cat_id,
+            "_subcategory": subcat_id,
+            "diff": diff,
         }
         return output
 
@@ -274,8 +316,7 @@ def align_dataset(
             load_from_cache_file=(not data_args.overwrite_cache) or (training_args.local_process_index != 0),
             desc="Converting format of dataset",
         )
-
-    dataset_converter = get_dataset_converter(dataset_attr.formatting, dataset_attr, data_args)
+    dataset_converter = get_dataset_converter(dataset_attr.formatting, dataset_attr, data_args)    
     return dataset.map(
         dataset_converter,
         batched=False,
