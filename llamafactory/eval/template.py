@@ -30,6 +30,12 @@ class EvalTemplate:
         input: a dict with keys {"question", "A", "B", "C", "D", "answer"}
         output: a tuple of (prompt, response).
         """
+        if "input" in example and "target" in example:
+            example = {
+                    **example,
+                    "question": example.get("input"),
+                    "answer": example.get("target")
+                }
         candidates = [self.choice.format(choice=ch, content=example[ch]) for ch in CHOICES if ch in example]
         return "".join([example["question"]] + candidates + [self.answer]), example["answer"]
 
