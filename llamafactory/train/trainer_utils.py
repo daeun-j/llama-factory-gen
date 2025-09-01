@@ -519,6 +519,51 @@ def _create_muon_optimizer(
     return optimizer
 
 
+# def _create_sam_optimizer(
+#     model: "PreTrainedModel",
+#     training_args: "TrainingArguments",
+#     finetuning_args: "FinetuningArguments",
+# ) -> "torch.optim.Optimizer":
+#     from ..third_party.sam import SAM
+#     from ..third_party.muon import Muon
+
+#     muon_params, adamw_params, params = [], [], []
+#     for name, param in model.named_parameters():
+#         if param.requires_grad:
+#             params.append(param)
+#             if param.ndim == 2 and "embed" not in name and "lm_head" not in name:
+#                 muon_params.append(param)
+#             else:
+#                 adamw_params.append(param)
+                
+#     base_optimizer =torch.optim.AdamW(
+#         lr=training_args.learning_rate,
+#         weight_decay=training_args.weight_decay,
+#         params=params,
+#         # muon_params=muon_params,
+#         # adamw_params=adamw_params,
+#         # adamw_betas=(training_args.adam_beta1, training_args.adam_beta2),
+#         # adamw_eps=training_args.adam_epsilon,
+#     )
+
+#     # params 'lr': 1e-05, 'wd': 0.0, 'momentum': 0.95, 'nesterov': True, 'ns_steps': 5, 'adamw_betas': (0.9, 0.999), 'adamw_eps': 1e-08}]'lr': 1e-05, 'wd': 0.0, 'momentum': 0.95, 'nesterov': True, 'ns_steps': 5, 'adamw_betas': (0.9, 0.999), 'adamw_eps': 1e-08}]
+#     optimizer = SAM(
+#         lr=training_args.learning_rate,
+#         wd=training_args.weight_decay,
+#         params=params,
+#         # muon_params=muon_params,
+#         # adamw_params=adamw_params,
+#         adamw_betas=(training_args.adam_beta1, training_args.adam_beta2),
+#         adamw_eps=training_args.adam_epsilon,
+#         base_optimizer=base_optimizer,
+#         sam_rho=finetuning_args.sam_rho, 
+#         sam_cri=finetuning_args.sam_cri, 
+#     )
+#     logger.info_rank0(
+#         f"Using SAM optimizer with {len(muon_params)} SAM params."
+#     )
+#     return optimizer
+
 def create_custom_optimizer(
     model: "PreTrainedModel",
     training_args: "TrainingArguments",
@@ -629,51 +674,6 @@ def get_batch_logps(
         logps = (per_token_logps * loss_mask).sum(-1)
 
     return logps, valid_length
-
-
-def dft_loss_func(outputs, labels, num_items_in_batch=None):
-    logits = outputs.get("logits")
-    if logits is None:
-        return outputs.get("loss", torch.tensor(0.0))
-
-    logits = logits.float()
-    vocab_size = logits.size(-1)
-    labels = torch.nn.functional.pad(labels, (0, 1), value=-100)
-    shift_labels = labels[..., 1:].contiguous()
-    logits = logits.view(-1, vocab_size)
-    shift_labels = shift_labels.view(-1)
-    shift_labels = shift_labels.to(logits.device)
-
-    loss = _dft_cross_entropy(logits, shift_labels, num_items_in_batch)
-    return loss
-
-
-def _dft_cross_entropy(
-    source: torch.Tensor,
-    target: torch.Tensor,
-    num_items_in_batch: Optional[torch.Tensor] = None,
-    ignore_index: int = -100,
-) -> torch.Tensor:
-    per_token_loss = torch.nn.functional.cross_entropy(source, target, ignore_index=ignore_index, reduction="none")
-    valid_mask = target != ignore_index
-    if not valid_mask.any():
-        return torch.tensor(0.0, device=source.device, dtype=source.dtype)
-
-    valid_losses = per_token_loss[valid_mask]
-
-    with torch.no_grad():
-        target_probs = torch.exp(-valid_losses)
-
-    weighted_losses = valid_losses * target_probs
-
-    if num_items_in_batch is not None:
-        total_loss = weighted_losses.sum()
-        if torch.is_tensor(num_items_in_batch):
-            num_items_in_batch = num_items_in_batch.to(total_loss.device)
-        loss = total_loss / num_items_in_batch
-    else:
-        loss = weighted_losses.mean()
-    return loss
 
 
 def nested_detach(
