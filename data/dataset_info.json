@@ -1,4 +1,34 @@
 {
+  "Alpaca-gpt4": {
+    "file_name": "Alpaca-gpt4.json"
+  },
+  "Alpaca": {
+    "file_name": "Alpaca.json"
+  },
+  "Wizard": {
+    "file_name": "Wizard.json"
+  },
+  "cleaned_alpaca": {
+    "file_name": "cleaned_alpaca.json"
+  },
+  "alpaca_categorized": {
+    "file_name": "alpaca_categorized.json"
+  },
+  "alpaca_center_outer_selected": {
+    "file_name": "alpaca_center_outer_selected.json"
+  },
+  "alpaca_with_difficulty": {
+    "file_name": "alpaca_with_difficulty.json"
+  },
+  "Wizard_demo": {
+    "file_name": "Wizard_demo.json"
+  },
+  "OpenMathInstruct_alpaca_cleaned_balanced_suffled": {
+    "file_name": "OpenMathInstruct_alpaca_cleaned_balanced_suffled.json"
+  },
+  "OpenMathInstruct_alpaca_cleaned_balanced": {
+    "file_name": "OpenMathInstruct_alpaca_cleaned_balanced.json"
+  },
   "identity": {
     "file_name": "identity.json"
   },
