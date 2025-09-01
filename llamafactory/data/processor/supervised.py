@@ -62,7 +62,7 @@ class SupervisedDatasetProcessor(DatasetProcessor):
 
             if self.data_args.train_on_prompt:
                 source_label = source_ids
-            elif self.template.efficient_eos and turn_idx != 0:
+            elif self.template.efficient_eos:
                 source_label = [self.tokenizer.eos_token_id] + [IGNORE_INDEX] * (source_len - 1)
             else:
                 source_label = [IGNORE_INDEX] * source_len
@@ -111,6 +111,9 @@ class SupervisedDatasetProcessor(DatasetProcessor):
             model_inputs["images"].append(examples["_images"][i])
             model_inputs["videos"].append(examples["_videos"][i])
             model_inputs["audios"].append(examples["_audios"][i])
+            model_inputs["category"].append(examples["_category"][i])
+            model_inputs["subcategory"].append(examples["_subcategory"][i])
+            model_inputs["diff"].append(examples["diff"][i])
 
         return model_inputs
 
@@ -199,5 +202,8 @@ class PackedSupervisedDatasetProcessor(SupervisedDatasetProcessor):
             model_inputs["images"].append(packed_images or None)
             model_inputs["videos"].append(packed_videos or None)
             model_inputs["audios"].append(packed_audios or None)
-
+            model_inputs["category"].append(examples["_category"][i])
+            model_inputs["subcategory"].append(examples["_subcategory"][i])
+            model_inputs["diff"].append(examples["diff"][i])
+            
         return model_inputs
